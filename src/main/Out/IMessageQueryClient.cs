@@ -8,6 +8,13 @@ namespace ei8.Cortex.Chat.Nucleus.Client.Out
 {
     public interface IMessageQueryClient
     {
-        Task<IEnumerable<MessageData>> GetMessagesAsync(string baseUrl, string bearerToken, DateTimeOffset? maxTimestamp = null, int? pageSize = null, CancellationToken token = default);
+        Task<IEnumerable<MessageResult>> GetMessagesAsync(
+            string baseUrl, 
+            string bearerToken, 
+            DateTimeOffset? maxTimestamp = null, 
+            int? pageSize = null, 
+            IEnumerable<Guid> externalRegionIds = null,
+            CancellationToken token = default
+            );
     }
 }

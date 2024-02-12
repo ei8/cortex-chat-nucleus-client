@@ -1,4 +1,5 @@
 ﻿using ei8.Cortex.Chat.Common;
+using Microsoft.AspNetCore.Http.Extensions;
 using neurUL.Common.Http;
 using NLog;
 using Polly;
@@ -6,6 +7,7 @@ using Polly.Retry;
 using Splat;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
@@ -32,21 +34,26 @@ namespace ei8.Cortex.Chat.Nucleus.Client.Out
             this.requestProvider = requestProvider ?? Locator.Current.GetService<IRequestProvider>();
         }
 
-        public async Task<IEnumerable<MessageData>> GetMessagesAsync(string baseUrl, string bearerToken, DateTimeOffset? maxTimestamp = null, int? pageSize = null, CancellationToken token = default)
+        public async Task<IEnumerable<MessageResult>> GetMessagesAsync(
+            string baseUrl,
+            string bearerToken,
+            DateTimeOffset? maxTimestamp = null,
+            int? pageSize = null,
+            IEnumerable<Guid> externalRegionIds = null,
+            CancellationToken token = default
+            )
         {
-            var maxTimestampParam = maxTimestamp.HasValue ?
-                "maxTimestamp=" + HttpUtility.UrlEncode(maxTimestamp.Value.ToString("o")) :
-                string.Empty;
-            var pageSizeParam = pageSize.HasValue ?
-                "pageSize=" + pageSize.Value.ToString() :
-                string.Empty;
-            var queryString = maxTimestamp.HasValue || pageSize.HasValue ? "?" : string.Empty;
-            queryString += maxTimestamp.HasValue ? maxTimestampParam : string.Empty;
-            queryString += maxTimestamp.HasValue && pageSize.HasValue ? "&" : string.Empty;
-            queryString += pageSize.HasValue ? pageSizeParam : string.Empty;
-
+            var qb = new QueryBuilder();
+            if (maxTimestamp.HasValue)
+                qb.Add("maxTimestamp", HttpUtility.UrlEncode(maxTimestamp.Value.ToString("o")));
+            if (pageSize.HasValue)
+                qb.Add("pageSize", pageSize.Value.ToString());
+            if (externalRegionIds != null && externalRegionIds.Any())
+                qb.Add("externalRegionId", externalRegionIds.Select(eri => eri.ToString()));
+            var queryString = qb.Any() ? "?" + qb.ToString() : string.Empty;
+            
             return await HttpMessageQueryClient.exponentialRetryPolicy.ExecuteAsync(async () =>
-                await this.requestProvider.GetAsync<IEnumerable<MessageData>>(
+                await this.requestProvider.GetAsync<IEnumerable<MessageResult>>(
                     $"{baseUrl}{HttpMessageQueryClient.messagesPath}{queryString}", bearerToken, token
                 )
             );

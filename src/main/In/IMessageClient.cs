@@ -8,6 +8,15 @@ namespace ei8.Cortex.Chat.Nucleus.Client.In
 {
     public interface IMessageClient
     {
-        Task CreateMessage(string avatarUrl, string id, string content, string regionId, string bearerToken, CancellationToken token = default(CancellationToken));
+        Task CreateMessage(
+            string avatarUrl, 
+            string id, 
+            string content, 
+            string regionId, 
+            string externalReferenceUrl, 
+            IEnumerable<string> destinationRegionIds, 
+            string bearerToken, 
+            CancellationToken token = default
+            );
     }
 }
