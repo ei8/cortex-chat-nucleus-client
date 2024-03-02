@@ -11,9 +11,9 @@ namespace ei8.Cortex.Chat.Nucleus.Client.Out
         Task<IEnumerable<MessageResult>> GetMessagesAsync(
             string baseUrl, 
             string bearerToken, 
-            DateTimeOffset? maxTimestamp = null, 
-            int? pageSize = null, 
-            IEnumerable<Guid> externalRegionIds = null,
+            DateTimeOffset? maxTimestamp, 
+            int? pageSize, 
+            IEnumerable<Guid> avatarIds = null,
             CancellationToken token = default
             );
     }

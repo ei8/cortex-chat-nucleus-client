@@ -37,9 +37,9 @@ namespace ei8.Cortex.Chat.Nucleus.Client.Out
         public async Task<IEnumerable<MessageResult>> GetMessagesAsync(
             string baseUrl,
             string bearerToken,
-            DateTimeOffset? maxTimestamp = null,
-            int? pageSize = null,
-            IEnumerable<Guid> externalRegionIds = null,
+            DateTimeOffset? maxTimestamp,
+            int? pageSize,
+            IEnumerable<Guid> avatarIds = null,
             CancellationToken token = default
             )
         {
@@ -48,8 +48,8 @@ namespace ei8.Cortex.Chat.Nucleus.Client.Out
                 qb.Add("maxTimestamp", HttpUtility.UrlEncode(maxTimestamp.Value.ToString("o")));
             if (pageSize.HasValue)
                 qb.Add("pageSize", pageSize.Value.ToString());
-            if (externalRegionIds != null && externalRegionIds.Any())
-                qb.Add("externalRegionId", externalRegionIds.Select(eri => eri.ToString()));
+            if (avatarIds != null && avatarIds.Any())
+                qb.Add("avatarId", avatarIds.Select(eri => eri.ToString()));
             var queryString = qb.Any() ? "?" + qb.ToString() : string.Empty;
             
             return await HttpMessageQueryClient.exponentialRetryPolicy.ExecuteAsync(async () =>

@@ -30,11 +30,11 @@ namespace ei8.Cortex.Chat.Nucleus.Client.In
             this.requestProvider = requestProvider ?? Locator.Current.GetService<IRequestProvider>();
         }
         
-        public async Task CreateMessage(string avatarUrl, string id, string content, string regionId, string externalReferenceUrl, IEnumerable<string> destinationRegionIds, string bearerToken, CancellationToken token = default(CancellationToken)) =>
+        public async Task CreateMessage(string baseUrl, string bearerToken, string id, string content, string regionId, string externalReferenceUrl, IEnumerable<string> recipientAvatarIds = null, CancellationToken token = default(CancellationToken)) =>
             await HttpMessageClient.exponentialRetryPolicy.ExecuteAsync(
-                async () => await this.CreateMessageInternal(avatarUrl, id, content, regionId, externalReferenceUrl, destinationRegionIds, bearerToken, token).ConfigureAwait(false));
+                async () => await this.CreateMessageInternal(baseUrl, bearerToken, id, content, regionId, externalReferenceUrl, recipientAvatarIds, token).ConfigureAwait(false));
 
-        private async Task CreateMessageInternal(string avatarUrl, string id, string content, string regionId, string externalReferenceUrl, IEnumerable<string> destinationRegionIds, string bearerToken, CancellationToken token = default(CancellationToken))
+        private async Task CreateMessageInternal(string baseUrl, string bearerToken, string id, string content, string regionId, string externalReferenceUrl, IEnumerable<string> recipientAvatarIds = null, CancellationToken token = default(CancellationToken))
         {
             var data = new
             {
@@ -42,11 +42,11 @@ namespace ei8.Cortex.Chat.Nucleus.Client.In
                 Content = content,
                 RegionId = regionId,
                 ExternalReferenceUrl = externalReferenceUrl,
-                DestinationRegionIds = destinationRegionIds
+                RecipientAvatarIds = recipientAvatarIds
             };
 
             await this.requestProvider.PostAsync(
-               $"{avatarUrl}{HttpMessageClient.messagesPath}",
+               $"{baseUrl}{HttpMessageClient.messagesPath}",
                data,
                bearerToken
                );
