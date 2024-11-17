@@ -35,7 +35,7 @@ namespace ei8.Cortex.Chat.Nucleus.Client.Out
             this.requestProvider = requestProvider ?? Locator.Current.GetService<IRequestProvider>();
         }
 
-        public async Task<IEnumerable<AvatarResult>> GetAvatarsByIdsAsync(string baseUrl, string bearerToken, IEnumerable<Guid> ids = null, CancellationToken token = default)
+        public async Task<IEnumerable<AvatarResult>> GetAvatarsAsync(string baseUrl, string bearerToken, IEnumerable<Guid> ids = null, CancellationToken token = default)
         {
             var qb = new QueryBuilder();
             if (ids != null && ids.Any())

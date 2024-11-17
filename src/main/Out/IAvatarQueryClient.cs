@@ -9,7 +9,7 @@ namespace ei8.Cortex.Chat.Nucleus.Client.Out
 {
     public interface IAvatarQueryClient
     {
-        Task<IEnumerable<AvatarResult>> GetAvatarsByIdsAsync(
+        Task<IEnumerable<AvatarResult>> GetAvatarsAsync(
             string baseUrl,
             string bearerToken,
             IEnumerable<Guid> ids = null,
