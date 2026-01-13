@@ -1,13 +1,13 @@
 ﻿using ei8.Cortex.Chat.Common;
+using ei8.Cortex.Coding.Client;
+using ei8.Cortex.Coding.Mirrors;
 using Microsoft.AspNetCore.Http.Extensions;
-using neurUL.Common.Http;
-using NLog;
-using Polly;
-using Polly.Retry;
-using Splat;
+using neurUL.Common.Domain.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
@@ -16,46 +16,42 @@ namespace ei8.Cortex.Chat.Nucleus.Client.Out
 {
     public class HttpMessageQueryClient : IMessageQueryClient
     {
-        private readonly IRequestProvider requestProvider;
-
-        private static AsyncRetryPolicy exponentialRetryPolicy = Policy
-            .Handle<Exception>()
-            .WaitAndRetryAsync(
-                3,
-                attempt => TimeSpan.FromMilliseconds(100 * Math.Pow(2, attempt)),
-                (ex, _) => HttpMessageQueryClient.logger.Error(ex, "Error occurred while communicating with Neurul Cortex. " + ex.InnerException?.Message)
-            );
-
-        private static readonly Logger logger = LogManager.GetCurrentClassLogger();
         private static readonly string messagesPath = "nuclei/chat/messages";
 
-        public HttpMessageQueryClient(IRequestProvider requestProvider = null)
+        private readonly IHttpClientFactory httpClientFactory;
+
+        public HttpMessageQueryClient(IHttpClientFactory httpClientFactory)
         {
-            this.requestProvider = requestProvider ?? Locator.Current.GetService<IRequestProvider>();
+            AssertionConcern.AssertArgumentNotNull(httpClientFactory, nameof(httpClientFactory));
+
+            this.httpClientFactory = httpClientFactory;
         }
 
-        public async Task<IEnumerable<MessageResult>> GetMessagesAsync(
+        public async Task<IEnumerable<IMirrorImageSeries<MessageResult>>> GetMessagesAsync(
             string baseUrl,
             string bearerToken,
             DateTimeOffset? maxTimestamp,
             int? pageSize,
+            bool includeRemote,
             IEnumerable<Guid> avatarIds = null,
             CancellationToken token = default
             )
         {
             var qb = new QueryBuilder();
             if (maxTimestamp.HasValue)
-                qb.Add("maxTimestamp", HttpUtility.UrlEncode(maxTimestamp.Value.ToString("o")));
+                qb.Add(nameof(maxTimestamp), HttpUtility.UrlEncode(maxTimestamp.Value.ToString("o")));
             if (pageSize.HasValue)
-                qb.Add("pageSize", pageSize.Value.ToString());
+                qb.Add(nameof(pageSize), pageSize.Value.ToString());
             if (avatarIds != null && avatarIds.Any())
                 qb.Add("avatarId", avatarIds.Select(eri => eri.ToString()));
-            var queryString = qb.Any() ? "?" + qb.ToString() : string.Empty;
-            
-            return await HttpMessageQueryClient.exponentialRetryPolicy.ExecuteAsync(async () =>
-                await this.requestProvider.GetAsync<IEnumerable<MessageResult>>(
-                    $"{baseUrl}{HttpMessageQueryClient.messagesPath}{queryString}", bearerToken, token
-                )
+            qb.Add(nameof(includeRemote), includeRemote.ToString());
+
+            var queryString = qb.Any() ? qb.ToString() : string.Empty;
+
+            return await this.httpClientFactory.CreateClient().AuthGetMirrorImageSeriesAsync<MessageResult>(
+                $"{baseUrl}{HttpMessageQueryClient.messagesPath}{queryString}",
+                bearerToken,
+                token
             );
         }
     }
