@@ -33,11 +33,19 @@ namespace ei8.Cortex.Chat.Nucleus.Client.Out
                 qb.Add("id", ids.Select(i => i.ToString()));
             var queryString = qb.Any() ? "?" + qb.ToString() : string.Empty;
 
-            return await this.httpClientFactory.CreateClient().AuthGetMirrorImageSeriesAsync<AvatarInfo>(
+            var getResult = await this.httpClientFactory.CreateClient().AuthGetMirrorImageSeriesAsync<AvatarInfo>(
                 $"{baseUrl}{HttpAvatarQueryClient.avatarsPath}{queryString}",
                 bearerToken,
                 token
             );
+
+            if (!getResult.Response.IsSuccessStatusCode)
+            {
+                var failContent = await getResult.Response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                throw new HttpRequestException($"Error encountered while sending request to '{baseUrl}': '{getResult.Response.Content.ReadAsStringAsync()}");
+            }
+
+            return getResult.Result;
         }
     }
 }
